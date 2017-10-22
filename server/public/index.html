@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><meta charset="utf-8">
+<head>
+    <meta charset="UTF-8">
+    <title>设备</title>
+</head>
+<style type="text/css">
+    canvas#deviceview {
+        border-color:blue blue blue blue;
+        border-width:5px 5px 5px 5px;
+        border-style:solid solid solid solid;
+        background:green;
+    }
+</style>
+
+<body>
+<canvas id="deviceview">
+</canvas>
+<div id="buttons"></div>
+</body>
+<script type="text/javascript">
+    if(!window.WebSocket)
+        alert("浏览器不支持！")
+    var canvas=null;
+    var g = 0
+    console.log("I am not ready!");
+    window.onload = function(){
+        canvas = document.getElementById("deviceview");
+        g = canvas.getContext('2d')
+        initWebSocket()
+    }
+
+    function initWebSocket(){
+        ws = new WebSocket("ws://localhost:8888/connection");
+        ws.binaryType = 'blob'
+        ws.onclose = function() {
+          console.log('onclose', arguments)
+        }
+
+        ws.onerror = function() {
+          console.log('onerror', arguments)
+        }
+        ws.onmessage = function(message) {
+            console.log('new message')
+            var blob = new Blob([message.data], {type: 'image/jpeg'})
+            var URL = window.URL || window.webkitURL
+            var img = new Image()
+            img.onload = function() {
+                console.log(img.width, img.height)
+                canvas.width = img.width
+                canvas.height = img.height
+                g.drawImage(img, 0, 0)
+                img.onload = null
+                img = null
+                u = null
+                blob = null
+            }
+            var u = URL.createObjectURL(blob)
+            img.src = u
+        }
+
+        ws.onopen = function() {
+          console.log('onopen', arguments)
+          ws.send('{"deviceId":"e5ae5af4","cmd":"init"}')
+        }
+    }
+
+
+</script>
+</html>
